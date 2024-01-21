@@ -1,3 +1,11 @@
 # GAIA [Go Anywhere In Amrita]
 
-A desktop application which helps you find your way in the campus.
+A cross-platform application which helps you find your way in the campus.
+
+# Installing Dependencies
+
+`pip install -r requirements.txt`
+
+# Usage
+
+`flet run`
