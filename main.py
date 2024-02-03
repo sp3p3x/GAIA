@@ -1,7 +1,15 @@
 import flet as ft
 import time
 
-class Animation():
+DEBUG = True
+
+
+def debug(*args):
+    if DEBUG:
+        print(args)
+
+
+class Animation:
 
     def fade_in_out(widget):
         time.sleep(0.1)
@@ -14,67 +22,130 @@ class Animation():
         time.sleep(0.3)
 
 
-class UI():
-    
-    def __init__(self,page):
-        self.page = page
+class Functions:
 
-    def route_change(self):
-        self.page.views.clear()
-        self.page.views.append(
-            ft.View(
-                "/",
-                [
-                    ft.AppBar(title=ft.Text("From"), bgcolor=ft.colors.SURFACE_VARIANT),
-                    ft.TextField(label="From", hint_text="Enter Room Number"),
-                    ft.ElevatedButton("Next", on_click=lambda _: self.page.go("/fromPage")),
-                ],
-            )
+    def roomNumberIsValid(roomNum):
+        if len(roomNum) > 3:
+            return True
+        else:
+            return False
+
+
+class Pages:
+
+    fromRoomNumber = None
+    toRoomNumber = None
+
+    def rootpage(app):
+        return ft.View(
+            "/",
+            [
+                ft.AppBar(
+                    title=ft.Text("Main Menu"), bgcolor=ft.colors.SURFACE_VARIANT
+                ),
+                ft.ElevatedButton(
+                    "Navigate", on_click=lambda _: app.page.go("/inputPage")
+                ),
+            ],
         )
-        if self.page.route == "/fromPage":
-            self.page.views.append(
-                ft.View(
-                    "/fromPage",
-                    [
-                        ft.AppBar(title=ft.Text("To"), bgcolor=ft.colors.SURFACE_VARIANT),
-                        ft.TextField(label="To", hint_text="Enter Room Number"),
-                        ft.ElevatedButton("Next", on_click=lambda _: self.page.go("/")),
-                    ],
-                )
-            )
-        self.page.update()
+
+    def inputPage(app):
+
+        def getRoomNum(e):
+            global fromRoomNumber
+            global toRoomNumber
+            fromRoomNumber = fromRoomInput.value
+            toRoomNumber = toRoomInput.value
+            if Functions.roomNumberIsValid(
+                fromRoomNumber
+            ) and Functions.roomNumberIsValid(toRoomNumber):
+                debug(fromRoomNumber, toRoomNumber)
+                app.page.go("/pathPage")
+            else:
+                notValidInputWarning.open = True
+                app.page.update()
+                debug("input insufficient")
+
+        notValidInputWarning = ft.SnackBar(
+            content=ft.Text("Please enter a valid Room Number!"), action="Got it!"
+        )
+        fromRoomInput = ft.TextField(
+            label="From", hint_text="Enter Room Number", on_submit=getRoomNum
+        )
+        toRoomInput = ft.TextField(
+            label="To", hint_text="Enter Room Number", on_submit=getRoomNum
+        )
+
+        return ft.View(
+            "/inputPage",
+            [
+                ft.AppBar(title=ft.Text("Input"), bgcolor=ft.colors.SURFACE_VARIANT),
+                fromRoomInput,
+                toRoomInput,
+                notValidInputWarning,
+                ft.ElevatedButton("Next", on_click=getRoomNum),
+                ft.Image(src="foo/mapPlaceholder.jpg", fit=ft.ImageFit.FILL),
+            ],
+        )
+
+    def pathPage(app):
+        global fromRoomNumber
+        global toRoomNumber
+
+        return ft.View(
+            "/pathPage",
+            [
+                ft.AppBar(title=ft.Text("Path"), bgcolor=ft.colors.SURFACE_VARIANT),
+                ft.Text(fromRoomNumber),
+                ft.Text(toRoomNumber),
+                ft.ElevatedButton("Next", on_click=lambda _: app.page.go("/")),
+            ],
+        )
 
 
-class Main():
+class Main:
 
-    def __init__(self,page: ft.Page):
+    def __init__(self, page: ft.Page):
         self.page = page
         self.page.title = "GAIA"
-        self.page.window_maximized  = True
+        self.page.window_maximized = True
         self.page.vertical_alignment = ft.MainAxisAlignment.CENTER
         self.page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-        self.splash()
+        # self.splash()
         self.main()
 
-    def view_pop(self,view):
+    def view_pop(self, view):
         self.page.views.pop()
         top_view = self.page.views[-1]
         self.page.go(top_view.route)
 
     def splash(self):
         self.page.clean()
-        splash = ft.Image(src="assets/logo.png", width=1000, height=500, fit=ft.ImageFit.CONTAIN, opacity=0, animate_opacity=400)
+        splash = ft.Image(
+            src="assets/logo.png",
+            width=1000,
+            height=500,
+            fit=ft.ImageFit.CONTAIN,
+            opacity=0,
+            animate_opacity=400,
+        )
         self.page.add(splash)
         Animation.fade_in_out(splash)
 
+    def route_change(self, route):
+        self.page.views.clear()
+        self.page.views.append(Pages.rootpage(self))
+        if self.page.route == "/inputPage":
+            self.page.views.append(Pages.inputPage(self))
+        if self.page.route == "/pathPage":
+            self.page.views.append(Pages.pathPage(self))
+        self.page.update()
+
     def main(self):
-
-        UI(self.page)
-
-        self.page.on_route_change = UI.route_change
+        self.page.on_route_change = self.route_change
         self.page.on_view_pop = self.view_pop
-        self.page.go(self.page.route)
-        # self.page.go("/fromPage")
+        # self.page.go(self.page.route)
+        self.page.go("/inputPage")
 
 
 ft.app(target=Main)
