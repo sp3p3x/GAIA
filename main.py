@@ -44,35 +44,29 @@ class Pages:
     def updateMapSize(app, width, height):
         Pages.mapImage.width = width
         Pages.mapImage.height = height - 80
-        app.page.go("/inputPage")
 
-    def rootpage(app):
+    def homePage(app):
         return ft.View(
-            "/",
+            "/homePage",
             [
                 ft.AppBar(
                     title=ft.Text("Main Menu"), bgcolor=ft.colors.SURFACE_VARIANT
                 ),
                 ft.ElevatedButton(
-                    "Navigate", on_click=lambda _: app.page.go("/inputPage")
+                    "Navigate", on_click=lambda _: app.page.go("/fromInputPage")
                 ),
             ],
         )
 
-    def inputPage(app):
+    def fromInputPage(app):
         mapImage = Pages.mapImage
         Pages.updateMapSize(app, app.page.window_width, app.page.window_height)
 
         def getRoomNum(e):
             global fromRoomNumber
-            global toRoomNumber
             fromRoomNumber = fromRoomInput.value
-            toRoomNumber = toRoomInput.value
-            if Functions.roomNumberIsValid(
-                fromRoomNumber
-            ) and Functions.roomNumberIsValid(toRoomNumber):
-                debug(fromRoomNumber, toRoomNumber)
-                app.page.go("/pathPage")
+            if Functions.roomNumberIsValid(fromRoomNumber):
+                app.page.go("/toInputPage")
             else:
                 notValidInputWarning.open = True
                 app.page.update()
@@ -87,26 +81,16 @@ class Pages:
             hint_text="Enter Room Number",
             on_submit=getRoomNum,
             autofocus=True,
-            border_radius=50,
-            text_size=15,
-            bgcolor=ft.colors.BACKGROUND,
-            border_width=0.3,
-        )
-
-        toRoomInput = ft.TextField(
-            label="To",
-            hint_text="Enter Room Number",
-            on_submit=getRoomNum,
-            border_radius=50,
+            border_radius=20,
             text_size=15,
             bgcolor=ft.colors.BACKGROUND,
             border_width=0.3,
         )
 
         return ft.View(
-            "/inputPage",
+            "/fromInputPage",
             [
-                ft.AppBar(title=ft.Text("Input"), bgcolor=ft.colors.SURFACE_VARIANT),
+                ft.AppBar(title=ft.Text("From"), bgcolor=ft.colors.SURFACE_VARIANT),
                 ft.Container(
                     ft.Stack(
                         [
@@ -114,13 +98,63 @@ class Pages:
                             ft.Column(
                                 [
                                     fromRoomInput,
+                                ],
+                            ),
+                        ]
+                    ),
+                ),
+                notValidInputWarning,
+                # ft.ElevatedButton("Next", on_click=getRoomNum),
+            ],
+        )
+
+    def toInputPage(app):
+        mapImage = Pages.mapImage
+        Pages.updateMapSize(app, app.page.window_width, app.page.window_height)
+
+        def getRoomNum(e):
+            global toRoomNumber
+            toRoomNumber = toRoomInput.value
+            if Functions.roomNumberIsValid(toRoomNumber):
+                app.page.go("/pathPage")
+            else:
+                notValidInputWarning.open = True
+                app.page.update()
+                debug("input insufficient")
+
+        notValidInputWarning = ft.SnackBar(
+            content=ft.Text("Please enter a valid Room Number!"), action="Got it!"
+        )
+
+        toRoomInput = ft.TextField(
+            label="To",
+            hint_text="Enter Room Number",
+            on_submit=getRoomNum,
+            border_radius=20,
+            text_size=15,
+            bgcolor=ft.colors.BACKGROUND,
+            border_width=0.3,
+            autofocus=True,
+        )
+
+        return ft.View(
+            "/toInputPage",
+            [
+                ft.AppBar(
+                    title=ft.Text("To"),
+                    bgcolor=ft.colors.SURFACE_VARIANT,
+                ),
+                ft.Container(
+                    ft.Stack(
+                        [
+                            mapImage,
+                            ft.Column(
+                                [
                                     toRoomInput,
                                 ],
                             ),
                         ]
                     ),
-                    padding=0,
-                    border_radius=10,
                 ),
                 notValidInputWarning,
                 # ft.ElevatedButton("Next", on_click=getRoomNum),
@@ -154,6 +188,7 @@ class Main:
         self.main()
 
     def view_pop(self, view):
+        debug(self.page.views)
         self.page.views.pop()
         top_view = self.page.views[-1]
         self.page.go(top_view.route)
@@ -171,24 +206,32 @@ class Main:
         self.page.add(splash)
         Animation.fade_in_out(splash)
 
+    flag = True
+
     def route_change(self, route):
-        self.page.views.clear()
-        self.page.views.append(Pages.rootpage(self))
-        if self.page.route == "/inputPage":
-            self.page.views.append(Pages.inputPage(self))
-        if self.page.route == "/pathPage":
+        if self.flag == True:
+            self.page.views.clear()
+            self.page.views.append(Pages.homePage(self))
+            self.flag = False
+        if self.page.route == "/fromInputPage":
+            self.page.views.append(Pages.fromInputPage(self))
+        elif self.page.route == "/toInputPage":
+            self.page.views.append(Pages.toInputPage(self))
+        elif self.page.route == "/pathPage":
             self.page.views.append(Pages.pathPage(self))
+        debug(self.page.views)
         self.page.update()
 
     def pageResize(self, event):
         Pages.updateMapSize(self, self.page.window_width, self.page.window_height)
+        self.page.go(self.page.views[-1].route)
 
     def main(self):
         self.page.on_resize = self.pageResize
         self.page.on_route_change = self.route_change
         self.page.on_view_pop = self.view_pop
         # self.page.go(self.page.route)
-        self.page.go("/inputPage")
+        self.page.go("/fromInputPage")
 
 
 ft.app(target=Main)
