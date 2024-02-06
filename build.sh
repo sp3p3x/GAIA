@@ -1,1 +1,1 @@
-nuitka3 --follow-imports --onefile --windows-disable-console main.py
+flet pack main.py --add-data "assets:assets"
