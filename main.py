@@ -36,6 +36,16 @@ class Pages:
     fromRoomNumber = None
     toRoomNumber = None
 
+    mapImage = ft.Image(
+        src="foo/mapPlaceholder.jpg",
+        fit=ft.ImageFit.FILL,
+    )
+
+    def updateMapSize(app, width, height):
+        Pages.mapImage.width = width
+        Pages.mapImage.height = height - 80
+        app.page.go("/inputPage")
+
     def rootpage(app):
         return ft.View(
             "/",
@@ -50,6 +60,8 @@ class Pages:
         )
 
     def inputPage(app):
+        mapImage = Pages.mapImage
+        Pages.updateMapSize(app, app.page.window_width, app.page.window_height)
 
         def getRoomNum(e):
             global fromRoomNumber
@@ -69,22 +81,49 @@ class Pages:
         notValidInputWarning = ft.SnackBar(
             content=ft.Text("Please enter a valid Room Number!"), action="Got it!"
         )
+
         fromRoomInput = ft.TextField(
-            label="From", hint_text="Enter Room Number", on_submit=getRoomNum
+            label="From",
+            hint_text="Enter Room Number",
+            on_submit=getRoomNum,
+            autofocus=True,
+            border_radius=50,
+            text_size=15,
+            bgcolor=ft.colors.BACKGROUND,
+            border_width=0.3,
         )
+
         toRoomInput = ft.TextField(
-            label="To", hint_text="Enter Room Number", on_submit=getRoomNum
+            label="To",
+            hint_text="Enter Room Number",
+            on_submit=getRoomNum,
+            border_radius=50,
+            text_size=15,
+            bgcolor=ft.colors.BACKGROUND,
+            border_width=0.3,
         )
 
         return ft.View(
             "/inputPage",
             [
                 ft.AppBar(title=ft.Text("Input"), bgcolor=ft.colors.SURFACE_VARIANT),
-                fromRoomInput,
-                toRoomInput,
+                ft.Container(
+                    ft.Stack(
+                        [
+                            mapImage,
+                            ft.Column(
+                                [
+                                    fromRoomInput,
+                                    toRoomInput,
+                                ],
+                            ),
+                        ]
+                    ),
+                    padding=0,
+                    border_radius=10,
+                ),
                 notValidInputWarning,
-                ft.ElevatedButton("Next", on_click=getRoomNum),
-                ft.Image(src="foo/mapPlaceholder.jpg", fit=ft.ImageFit.FILL),
+                # ft.ElevatedButton("Next", on_click=getRoomNum),
             ],
         )
 
@@ -108,7 +147,7 @@ class Main:
     def __init__(self, page: ft.Page):
         self.page = page
         self.page.title = "GAIA"
-        self.page.window_maximized = True
+        # self.page.window_maximized = True
         self.page.vertical_alignment = ft.MainAxisAlignment.CENTER
         self.page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         # self.splash()
@@ -141,7 +180,11 @@ class Main:
             self.page.views.append(Pages.pathPage(self))
         self.page.update()
 
+    def pageResize(self, event):
+        Pages.updateMapSize(self, self.page.window_width, self.page.window_height)
+
     def main(self):
+        self.page.on_resize = self.pageResize
         self.page.on_route_change = self.route_change
         self.page.on_view_pop = self.view_pop
         # self.page.go(self.page.route)
