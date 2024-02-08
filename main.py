@@ -6,9 +6,9 @@ from PIL import Image, ImageDraw, ImageFont
 DEBUG = True
 
 
-def debug(*args):
+def debug(data):
     if DEBUG:
-        print(args)
+        print(f"{time.strftime('%H:%M:%S', time.gmtime())}: {data}\n")
 
 
 class GenMap:
@@ -81,7 +81,7 @@ class Pages:
     toRoomNumber = None
 
     mapImage = ft.Image(
-        src="foo/mapPlaceholder.jpg",
+        src="assets/genMaps/placeholderMap.png",
         fit=ft.ImageFit.FILL,
     )
 
@@ -93,14 +93,25 @@ class Pages:
         return ft.View(
             "/homePage",
             [
-                ft.AppBar(
-                    title=ft.Text("Main Menu"), bgcolor=ft.colors.SURFACE_VARIANT
-                ),
-                ft.ElevatedButton(
-                    "Navigate", on_click=lambda _: app.page.go("/fromInputPage")
-                ),
-                ft.ElevatedButton(
-                    "Generate Maps", on_click=lambda _: app.page.go("/mapGenPage")
+                # ft.AppBar(title=ft.Text("Main Menu"),bgcolor=ft.colors.SURFACE_VARIANT,center_title=True),
+                ft.Container(
+                    content=ft.Column(
+                        [
+                            ft.ElevatedButton(
+                                content=ft.Text("Navigate", size=60),
+                                on_click=lambda _: app.page.go("/fromInputPage"),
+                            ),
+                            ft.ElevatedButton(
+                                content=ft.Text("Generate Maps", size=60),
+                                on_click=lambda _: app.page.go("/mapGenPage"),
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=30,
+                    ),
+                    alignment=ft.alignment.center,
+                    padding=100,
                 ),
             ],
         )
@@ -132,20 +143,31 @@ class Pages:
             text_size=15,
             bgcolor=ft.colors.BACKGROUND,
             border_width=0.3,
+            height=43,
         )
 
         return ft.View(
             "/fromInputPage",
             [
-                ft.AppBar(title=ft.Text("From"), bgcolor=ft.colors.SURFACE_VARIANT),
+                ft.AppBar(
+                    title=ft.Text("From"),
+                    bgcolor=ft.colors.SURFACE_VARIANT,
+                    center_title=True,
+                ),
                 ft.Container(
                     ft.Stack(
                         [
                             mapImage,
-                            ft.Column(
-                                [
-                                    fromRoomInput,
-                                ],
+                            ft.Container(
+                                content=ft.Row(
+                                    [
+                                        fromRoomInput,
+                                        # ft.ElevatedButton("Next", on_click=getRoomNum),
+                                    ],
+                                    alignment=ft.MainAxisAlignment.CENTER,
+                                    spacing=10,
+                                ),
+                                alignment=ft.alignment.center,
                             ),
                         ]
                     ),
@@ -182,6 +204,7 @@ class Pages:
             bgcolor=ft.colors.BACKGROUND,
             border_width=0.3,
             autofocus=True,
+            height=43,
         )
 
         return ft.View(
@@ -190,15 +213,22 @@ class Pages:
                 ft.AppBar(
                     title=ft.Text("To"),
                     bgcolor=ft.colors.SURFACE_VARIANT,
+                    center_title=True,
                 ),
                 ft.Container(
                     ft.Stack(
                         [
                             mapImage,
-                            ft.Column(
-                                [
-                                    toRoomInput,
-                                ],
+                            ft.Container(
+                                content=ft.Row(
+                                    [
+                                        toRoomInput,
+                                        # ft.ElevatedButton("Next", on_click=getRoomNum),
+                                    ],
+                                    alignment=ft.MainAxisAlignment.CENTER,
+                                    spacing=10,
+                                ),
+                                alignment=ft.alignment.center,
                             ),
                         ]
                     ),
@@ -215,7 +245,11 @@ class Pages:
         return ft.View(
             "/pathPage",
             [
-                ft.AppBar(title=ft.Text("Path"), bgcolor=ft.colors.SURFACE_VARIANT),
+                ft.AppBar(
+                    title=ft.Text("Path"),
+                    bgcolor=ft.colors.SURFACE_VARIANT,
+                    center_title=True,
+                ),
                 ft.Text(fromRoomNumber),
                 ft.Text(toRoomNumber),
                 ft.ElevatedButton("Next", on_click=lambda _: app.page.go("/homePage")),
@@ -230,7 +264,18 @@ class Pages:
             rows = mapDataInput.value.split("\n")
             for row in rows:
                 mapData.append(row.split())
-            MapGenerator.genMap(mapData)
+            mapName = mapNameInput.value.replace(" ", "_")
+            MapGenerator.genMap(mapData, mapName)
+
+        mapNameInput = ft.TextField(
+            label="Map Name",
+            hint_text="Enter Map Name",
+            border_radius=20,
+            text_size=15,
+            bgcolor=ft.colors.BACKGROUND,
+            border_width=0.3,
+            autofocus=True,
+        )
 
         mapDataInput = ft.TextField(
             label="Map Data",
@@ -241,15 +286,17 @@ class Pages:
             text_size=15,
             bgcolor=ft.colors.BACKGROUND,
             border_width=0.3,
-            autofocus=True,
         )
 
         return ft.View(
             "/mapGenPage",
             [
                 ft.AppBar(
-                    title=ft.Text("Generate Map"), bgcolor=ft.colors.SURFACE_VARIANT
+                    title=ft.Text("Generate Map"),
+                    bgcolor=ft.colors.SURFACE_VARIANT,
+                    center_title=True,
                 ),
+                mapNameInput,
                 mapDataInput,
                 ft.ElevatedButton("Generate Map", on_click=generate),
             ],
