@@ -1,5 +1,7 @@
+import time, cv2
 import flet as ft
-import time
+from PIL import Image, ImageDraw, ImageFont
+
 
 DEBUG = True
 
@@ -7,6 +9,36 @@ DEBUG = True
 def debug(*args):
     if DEBUG:
         print(args)
+
+
+class GenMap:
+
+    empty = cv2.imread("mapComp/empty.png")
+    lift = cv2.imread("mapComp/lift.png")
+    stairs = cv2.imread("mapComp/stairs.png")
+    path = cv2.imread("mapComp/path.png")
+
+    def genRoom(self, text, fontSize=65):
+        template = Image.open("mapComp/room.png")
+        font = ImageFont.truetype("FreeMono.ttf", fontSize)
+        ImageDraw.Draw(template).text((70, 110), text, fill=(0, 0, 0), font=font)
+        template.save("genMaps/temp/room.png")
+        return cv2.imread("genMaps/temp/room.png")
+
+    def genRow(self, row):
+        rowImage = cv2.hconcat(row)
+        return rowImage
+
+    def genCol(self, col):
+        colImage = cv2.vconcat(col)
+        return colImage
+
+    def genMap(self, mapData, mapName="map"):
+        rows = []
+        for row in mapData:
+            rows.append(self.genRow(row))
+        columns = self.genCol(rows)
+        cv2.imwrite(f"genMaps/{mapName}.png", columns)
 
 
 class Animation:
@@ -171,7 +203,7 @@ class Pages:
                 ft.AppBar(title=ft.Text("Path"), bgcolor=ft.colors.SURFACE_VARIANT),
                 ft.Text(fromRoomNumber),
                 ft.Text(toRoomNumber),
-                ft.ElevatedButton("Next", on_click=lambda _: app.page.go("/")),
+                ft.ElevatedButton("Next", on_click=lambda _: app.page.go("/homePage")),
             ],
         )
 
@@ -188,7 +220,6 @@ class Main:
         self.main()
 
     def view_pop(self, view):
-        debug(self.page.views)
         self.page.views.pop()
         top_view = self.page.views[-1]
         self.page.go(top_view.route)
@@ -215,11 +246,12 @@ class Main:
             self.flag = False
         if self.page.route == "/fromInputPage":
             self.page.views.append(Pages.fromInputPage(self))
-        elif self.page.route == "/toInputPage":
+        if self.page.route == "/toInputPage":
             self.page.views.append(Pages.toInputPage(self))
-        elif self.page.route == "/pathPage":
+        if self.page.route == "/pathPage":
             self.page.views.append(Pages.pathPage(self))
-        debug(self.page.views)
+        for i in self.page.views:
+            debug(i.route)
         self.page.update()
 
     def pageResize(self, event):
