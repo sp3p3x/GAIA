@@ -13,20 +13,32 @@ def debug(*args):
 
 class GenMap:
 
-    empty = cv2.imread("mapComp/empty.png")
-    lift = cv2.imread("mapComp/lift.png")
-    stairs = cv2.imread("mapComp/stairs.png")
-    path = cv2.imread("mapComp/path.png")
+    empty = cv2.imread("assets/mapComp/empty.png")
+    lift = cv2.imread("assets/mapComp/lift.png")
+    stairs = cv2.imread("assets/mapComp/stairs.png")
+    path = cv2.imread("assets/mapComp/path.png")
 
     def genRoom(self, text, fontSize=65):
-        template = Image.open("mapComp/room.png")
+        template = Image.open("assets/mapComp/room.png")
         font = ImageFont.truetype("FreeMono.ttf", fontSize)
         ImageDraw.Draw(template).text((70, 110), text, fill=(0, 0, 0), font=font)
-        template.save("genMaps/temp/room.png")
-        return cv2.imread("genMaps/temp/room.png")
+        template.save("assets/genMaps/temp/room.png")
+        return cv2.imread("assets/genMaps/temp/room.png")
 
     def genRow(self, row):
-        rowImage = cv2.hconcat(row)
+        newRow = []
+        for block in row:
+            if block.lower() == "empty":
+                newRow.append(GenMap.empty)
+            if block.lower() == "lift":
+                newRow.append(GenMap.lift)
+            if block.lower() == "stairs":
+                newRow.append(GenMap.stairs)
+            if block.lower() == "path":
+                newRow.append(GenMap.path)
+            if block.lower() not in ["empty", "lift", "stairs", "path"]:
+                newRow.append(self.genRoom(str(block).upper()))
+        rowImage = cv2.hconcat(newRow)
         return rowImage
 
     def genCol(self, col):
@@ -38,7 +50,7 @@ class GenMap:
         for row in mapData:
             rows.append(self.genRow(row))
         columns = self.genCol(rows)
-        cv2.imwrite(f"genMaps/{mapName}.png", columns)
+        cv2.imwrite(f"assets/genMaps/{mapName}.png", columns)
 
 
 class Animation:
@@ -86,6 +98,9 @@ class Pages:
                 ),
                 ft.ElevatedButton(
                     "Navigate", on_click=lambda _: app.page.go("/fromInputPage")
+                ),
+                ft.ElevatedButton(
+                    "Generate Maps", on_click=lambda _: app.page.go("/mapGenPage")
                 ),
             ],
         )
@@ -207,6 +222,39 @@ class Pages:
             ],
         )
 
+    def mapGenPage(app):
+
+        def generate(e):
+            MapGenerator = GenMap()
+            mapData = []
+            rows = mapDataInput.value.split("\n")
+            for row in rows:
+                mapData.append(row.split())
+            MapGenerator.genMap(mapData)
+
+        mapDataInput = ft.TextField(
+            label="Map Data",
+            hint_text="Enter Map Data",
+            multiline=True,
+            max_lines=10,
+            border_radius=20,
+            text_size=15,
+            bgcolor=ft.colors.BACKGROUND,
+            border_width=0.3,
+            autofocus=True,
+        )
+
+        return ft.View(
+            "/mapGenPage",
+            [
+                ft.AppBar(
+                    title=ft.Text("Generate Map"), bgcolor=ft.colors.SURFACE_VARIANT
+                ),
+                mapDataInput,
+                ft.ElevatedButton("Generate Map", on_click=generate),
+            ],
+        )
+
 
 class Main:
 
@@ -250,6 +298,8 @@ class Main:
             self.page.views.append(Pages.toInputPage(self))
         if self.page.route == "/pathPage":
             self.page.views.append(Pages.pathPage(self))
+        if self.page.route == "/mapGenPage":
+            self.page.views.append(Pages.mapGenPage(self))
         for i in self.page.views:
             debug(i.route)
         self.page.update()
@@ -262,8 +312,7 @@ class Main:
         self.page.on_resize = self.pageResize
         self.page.on_route_change = self.route_change
         self.page.on_view_pop = self.view_pop
-        # self.page.go(self.page.route)
-        self.page.go("/fromInputPage")
+        self.page.go(self.page.route)
 
 
 ft.app(target=Main)
