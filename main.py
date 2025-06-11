@@ -36,6 +36,18 @@ class TracePath:
             rows.append(self.genRow(row))
         columns = self.genCol(rows)
         cv2.imwrite(f"assets/genMaps/{mapName}.png", columns)
+        # rows = []
+        # for row in mapData:
+        #     row_img = self.genRow(row)
+        #     if row_img is not None:
+        #         rows.append(row_img)
+
+        # if not rows:
+        #     print("No valid rows generated")
+        #     return
+
+        # columns = cv2.vconcat(rows)
+        # cv2.imwrite(f"assets/genMaps/{mapName}.png", columns)
 
     def generate(self, data):
         MapGenerator = TracePath()
@@ -296,7 +308,7 @@ class Pages:
 
     def fromInputPage(app):
         mapImage = Pages.mapImage
-        Pages.updateMapSize(app, app.page.window_width, app.page.window_height)
+        Pages.updateMapSize(app, app.page.width, app.page.height)
 
         def getRoomNum(e):
             global fromRoomNumber
@@ -357,7 +369,7 @@ class Pages:
 
     def toInputPage(app):
         mapImage = Pages.mapImage
-        Pages.updateMapSize(app, app.page.window_width, app.page.window_height)
+        Pages.updateMapSize(app, app.page.width, app.page.height)
 
         def getRoomNum(e):
             global toRoomNumber
@@ -428,10 +440,10 @@ class Pages:
         tracer.main(path)
 
         mapImage = Pages.mapImage
-        Pages.updateMapSize(app, app.page.window_width, app.page.window_height)
+        Pages.updateMapSize(app, app.page.width, app.page.height)
 
         pathTraceImage = Pages.pathTraceImage
-        Pages.updateMapSize(app, app.page.window_width, app.page.window_height)
+        Pages.updateMapSize(app, app.page.width, app.page.height)
 
         return ft.View(
             "/pathPage",
@@ -515,7 +527,7 @@ class Main:
         # self.page.window_maximized = True
         self.page.vertical_alignment = ft.MainAxisAlignment.CENTER
         self.page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-        self.splash()
+        # self.splash()
         self.main()
 
     def view_pop(self, view):
