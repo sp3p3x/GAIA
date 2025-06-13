@@ -78,13 +78,11 @@ class TracePath:
 
         overlay = self.generate_overlay(overlayData)
 
-        # Blend with base map
         base = base_map[:, :, :3]
         alpha = overlay[:, :, 3:] / 255.0
         overlay_rgb = overlay[:, :, :3]
         result = (alpha * overlay_rgb + (1 - alpha) * base).astype(np.uint8)
 
-        # Draw Start and End
         if path:
             self.draw_text(result, path[0], "START", (0, 255, 0))
             self.draw_text(result, path[-1], "END", (0, 0, 255))
@@ -131,7 +129,6 @@ class PathFind:
             print("Invalid start or end.")
             return []
 
-        # Find walkable neighbors of start and end
         start_paths = [n for n in self.getNeighbors(*start)]
         end_paths = [n for n in self.getNeighbors(*end)]
 
@@ -146,7 +143,7 @@ class PathFind:
         for s in start_paths:
             queue.append(s)
             visited.add(s)
-            prev[s] = start  # link to starting room
+            prev[s] = start
 
         target = None
 
@@ -165,7 +162,6 @@ class PathFind:
             print("Path not found")
             return []
 
-        # Reconstruct path
         path = []
         at = target
         while at != start:
@@ -237,10 +233,6 @@ class Animation:
 class Functions:
 
     def roomNumberIsValid(roomNum):
-        # if len(roomNum) > 3:
-        #     return True
-        # else:
-        #     return False
 
         roomNum = roomNum.upper()
 
@@ -339,13 +331,10 @@ class Pages:
                 ft.Container(
                     content=ft.Column(
                         [
-                            ft.Text(
-                                "GAIA Navigator", size=60, weight=ft.FontWeight.BOLD
-                            ),
+                            ft.Text("GAIA", size=60, weight=ft.FontWeight.BOLD),
                             ft.Text("Navigate your college effortlessly", size=20),
                             ft.Container(height=40),
                             ft.ElevatedButton(
-                                # icon=ft.icons.MAP,
                                 text="Navigate",
                                 icon_color="white",
                                 on_click=lambda _: app.page.go("/fromInputPage"),
@@ -356,7 +345,6 @@ class Pages:
                                 ),
                             ),
                             ft.ElevatedButton(
-                                # icon=ft.icons.BUILD,
                                 text="Generate Maps",
                                 icon_color="white",
                                 on_click=lambda _: app.page.go("/mapGenPage"),
@@ -511,14 +499,21 @@ class Pages:
 
         Pages.updateMapSize(app, app.page.width, app.page.height)
 
+        def goHome(e):
+            app.page.go("/homePage")
+            app.page.update()
+
         return ft.View(
             "/pathPage",
             [
-                ft.AppBar(title=ft.Text("Path"), center_title=True),
+                ft.AppBar(
+                    title=ft.Text("Path"),
+                    center_title=True,
+                    leading=ft.ElevatedButton(text="Back", on_click=goHome),
+                ),
                 ft.Container(
                     ft.Stack(
                         [
-                            zoomable_image(Pages.mapImage),
                             zoomable_image(Pages.pathTraceImage),
                         ]
                     ),
@@ -615,7 +610,7 @@ class Main:
         # self.page.window_maximized = True
         self.page.vertical_alignment = ft.MainAxisAlignment.CENTER
         self.page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-        # self.splash()
+        self.splash()
         self.main()
 
     def view_pop(self, view):
@@ -643,6 +638,9 @@ class Main:
             self.page.views.clear()
             self.page.views.append(Pages.homePage(self))
             self.flag = False
+        if self.page.route == "/homePage":
+            self.page.views.clear()
+            self.page.views.append(Pages.homePage(self))
         if self.page.route == "/fromInputPage":
             self.page.views.append(Pages.fromInputPage(self))
         if self.page.route == "/toInputPage":
